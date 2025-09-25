@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Wordle Solver</title>
+<style>
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: #1e1e2f;
+  color: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 50px 20px;
+}
+.container {
+  background: #2c2c3f;
+  border-radius: 15px;
+  padding: 30px;
+  max-width: 500px;
+  width: 100%;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+  text-align: center;
+}
+h1 {
+  margin-bottom: 25px;
+  color: #f0a500;
+}
+.board { 
+  display: flex; 
+  flex-direction: column; 
+  gap: 10px; 
+  align-items: center; 
+}
+.row { display: flex; justify-content: center; gap: 5px; }
+.cell {
+  width: 50px;
+  height: 50px;
+  font-size: 24px;
+  text-align: center;
+  border-radius: 8px;
+  border: none;
+  outline: none;
+  background: #3c3c55;
+  color: #fff;
+  cursor: pointer;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+.cell.green { background: #28a745; color: #fff; }
+.cell.yellow { background: #ffc107; color: #1e1e2f; }
+.cell.gray { background: #6c757d; color: #fff; }
+.cell.readonly { cursor: default; }
+
+.button-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-top: 40px;
+}
+button {
+  width: 150px;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: 0.2s;
+}
+#solve-btn { background: #f0a500; }
+#solve-btn:hover { background: #ffd580; }
+#reset-btn { background: #dc3545; }
+#reset-btn:hover { background: #ff6b6b; }
+
+#results { margin-top: 30px; text-align: left; }
+#results h3 { color: #ffd580; }
+ul { list-style: none; padding-left: 0; max-height: 250px; overflow-y: auto; }
+ul li { background: #3c3c55; margin: 5px 0; padding: 8px 12px; border-radius: 6px; }
+</style>
+</head>
+<body>
+<div class="container">
+<h1>Wordle Solver</h1>
+<div class="board" id="board"></div>
+
+<div class="button-container">
+  <button id="solve-btn" onclick="solve()">Solve</button>
+  <button id="reset-btn" onclick="resetGame()">Reset</button>
+</div>
+
+<div id="results"></div>
+</div>
+
+<script>
+const COLS = 5;
+let currentRow = 0;
+let wordList = [];
+
+fetch('words.txt')
+  .then(res => res.text())
+  .then(text => wordList = text.split('\n').map(w => w.trim()).filter(Boolean));
+
+// Create a new row of boxes
+function createRow() {
+  const board = document.getElementById('board');
+  const rowDiv = document.createElement('div');
+  rowDiv.className = 'row';
+  rowDiv.dataset.row = currentRow;
+  for (let c = 0; c < COLS; c++) {
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.maxLength = 1;
+    input.className = 'cell gray';
+    input.dataset.col = c;
+    input.dataset.row = currentRow;
+    input.addEventListener('input', e => handleInput(e, input));
+    input.addEventListener('keydown', e => handleBackspace(e, input));
+    input.addEventListener('click', () => cycleColor(input));
+    rowDiv.appendChild(input);
+  }
+  board.appendChild(rowDiv);
+  rowDiv.querySelector('input').focus();
+}
+
+function handleInput(e, cell) {
+  const row = parseInt(cell.dataset.row);
+  const col = parseInt(cell.dataset.col);
+  cell.value = cell.value.toUpperCase();
+  const cells = document.querySelectorAll(`.row[data-row='${row}'] .cell`);
+
+  // Move focus to next cell automatically
+  if (col < COLS - 1) {
+    cells[col + 1].focus();
+  }
+}
+
+
+function handleBackspace(e, cell) {
+  if (e.key === 'Backspace') {
+    const row = parseInt(cell.dataset.row);
+    const col = parseInt(cell.dataset.col);
+    const cells = document.querySelectorAll(`.row[data-row='${row}'] .cell`);
+    if (cell.value) {
+      cell.value = '';
+    } else if (col > 0) {
+      cells[col-1].focus();
+      cells[col-1].value = '';
+    }
+    e.preventDefault();
+  }
+}
+
+function cycleColor(cell) {
+  if (!cell.readOnly) {
+    if (cell.classList.contains('gray')) { cell.classList.remove('gray'); cell.classList.add('yellow'); }
+    else if (cell.classList.contains('yellow')) { cell.classList.remove('yellow'); cell.classList.add('green'); }
+    else if (cell.classList.contains('green')) { cell.classList.remove('green'); cell.classList.add('gray'); }
+  }
+}
+
+function scoreWord(word, allWords) {
+  const freq = {};
+  for(const w of allWords) [...new Set(w)].forEach(l=>freq[l]=(freq[l]||0)+1);
+  return [...new Set(word)].reduce((sum,l)=>sum+(freq[l]||0),0);
+}
+
+function suggestBestWord(words) {
+  if(!words.length) return null;
+  const scored = words.map(w=>({word:w,score:scoreWord(w,words)}));
+  scored.sort((a,b)=>b.score-a.score);
+  return scored[0].word;
+}
+
+function solve() {
+  if (!wordList.length) { alert('Words loading'); return; }
+
+  const correct = Array(COLS).fill(null);
+  const present = [];
+  const absent = [];
+
+  for (let r = 0; r <= currentRow; r++) {
+    const cells = document.querySelectorAll(`.row[data-row='${r}'] .cell`);
+    cells.forEach((cell,i)=>{
+      const letter = cell.value.toLowerCase();
+      if (!letter) return;
+      if (cell.classList.contains('green')) correct[i]=letter;
+      else if (cell.classList.contains('yellow')) present.push({letter,pos:i});
+      else if (cell.classList.contains('gray')) absent.push(letter);
+    });
+  }
+
+  const results = wordList.filter(word => {
+    if (word.length !== COLS) return false;
+    for (let i=0;i<COLS;i++) if (correct[i] && word[i]!==correct[i]) return false;
+    for (const p of present) if(!word.includes(p.letter) || word[p.pos]===p.letter) return false;
+    for (const a of absent) if(word.includes(a) && !correct.includes(a) && !present.some(p=>p.letter===a)) return false;
+    return true;
+  });
+
+  const best = suggestBestWord(results);
+  document.getElementById('results').innerHTML = `
+    <h3>Best Next Guess: <strong>${best||'None'}</strong></h3>
+    <h3>Matches (${results.length}):</h3>
+    <ul>${results.map(w=>`<li>${w}</li>`).join('')}</ul>
+  `;
+
+  // **Lock the current row after pressing Solve**
+  const cells = document.querySelectorAll(`.row[data-row='${currentRow}'] .cell`);
+  cells.forEach(c => { 
+      c.readOnly = true; 
+      c.classList.add('readonly'); 
+  });
+
+  // Create new row for next guess
+  currentRow++;
+  createRow();
+}
+
+function resetGame() {
+  currentRow = 0;
+  document.getElementById('board').innerHTML = '';
+  document.getElementById('results').innerHTML = '';
+  createRow();
+}
+
+// Start with 1 row
+createRow();
+</script>
+</body>
+</html>
