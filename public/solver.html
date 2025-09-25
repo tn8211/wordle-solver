@@ -86,7 +86,7 @@ button {
 #results { margin-top: 30px; text-align: left; }
 #results h3 { color: #ffd580; }
 
-/* ✅ Compact grid for matches */
+/* Compact grid for matches */
 .matches {
   display: flex;
   flex-wrap: wrap;
@@ -113,7 +113,7 @@ button {
   background: #55556d;
 }
 
-/* 🎛 Background controls bottom-left */
+/* Background controls bottom-left */
 .bg-controls {
   position: fixed;
   bottom: 20px;
@@ -137,6 +137,18 @@ button {
 #bg-change-btn:hover { background: #20c4d8; }
 #bg-toggle-btn { background: #6c757d; color: #fff; }
 #bg-toggle-btn:hover { background: #8a939b; }
+
+#match-search {
+  padding: 6px 10px;
+  margin: 10px 0;
+  width: 100%;
+  border-radius: 6px;
+  border: none;
+  font-size: 14px;
+  background: #3c3c55;
+  color: #fff;
+}
+#match-search::placeholder { color: #ccc; }
 </style>
 </head>
 <body>
@@ -154,7 +166,7 @@ button {
   <div id="results"></div>
 </div>
 
-<!-- 🎛 Background buttons -->
+<!-- Background buttons -->
 <div class="bg-controls">
   <button id="bg-change-btn" onclick="changeBackground()">Change Background</button>
   <button id="bg-toggle-btn" onclick="toggleBackground()">Disable Background</button>
@@ -185,6 +197,9 @@ function createRow() {
     input.addEventListener('input', e => handleInput(e, input));
     input.addEventListener('keydown', e => handleBackspace(e, input));
     input.addEventListener('click', () => cycleColor(input));
+    input.addEventListener('keypress', e => {
+      if (e.key === 'Enter') solve();
+    });
     rowDiv.appendChild(input);
   }
   board.appendChild(rowDiv);
@@ -266,13 +281,13 @@ function solve() {
     document.getElementById('invalid').style.display = 'none';
   }
 
-  // ✅ Check if all letters are green
+  // Check if all letters are green
   const allGreen = [...cells].every(c => c.classList.contains('green'));
   if (allGreen) {
     document.getElementById('results').innerHTML = `
       <h3>🎉 You solved it! The word is <strong>${guess.toUpperCase()}</strong></h3>
     `;
-    return; // stop here
+    return;
   }
 
   const correct = Array(COLS).fill(null);
@@ -316,10 +331,22 @@ function solve() {
       ">${best.toUpperCase()}</button>` : 'None'}
     </h3>
     <h3>Matches (${results.length}):</h3>
-    <ul class="matches">
+    <input type="text" id="match-search" placeholder="Search..." />
+    <ul class="matches" id="matches-list">
       ${results.map(w=>`<li><button onclick="fillGuess('${w}')">${w}</button></li>`).join('')}
     </ul>
   `;
+
+  // Add search functionality
+  const searchInput = document.getElementById('match-search');
+  const matchesList = document.getElementById('matches-list');
+  searchInput.addEventListener('input', () => {
+    const filter = searchInput.value.toLowerCase();
+    [...matchesList.children].forEach(li => {
+      const word = li.textContent.toLowerCase();
+      li.style.display = word.includes(filter) ? '' : 'none';
+    });
+  });
 
   cells.forEach(c => { c.readOnly = true; c.classList.add('readonly'); });
   currentRow++;
@@ -338,7 +365,7 @@ function resetGame() {
 // Start with 1 row
 createRow();
 
-/* 🎨 Background logic */
+/* Background logic */
 let bgEnabled = true;
 const backgrounds = [
   "https://i.pinimg.com/originals/22/07/43/220743df7f831dce831375e9949a68c6.gif",
