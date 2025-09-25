@@ -183,4 +183,18 @@ button {
 .container {
   position: relative;
 }
+.cell {
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+/* Optional: flip animation */
+.cell.flip {
+  transform: rotateX(90deg);
+  transition: transform 0.3s ease;
+}
+
+.cell.flipped {
+  transform: rotateX(0deg);
+}
+
 
