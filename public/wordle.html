@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Wordle</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Back button top-left -->
+    <button class="back-btn" onclick="location.href='index.html'">&#8592;</button>
+
+    <h1>Wordle</h1>
+
+    <!-- Board -->
+    <div class="board" id="board"></div>
+
+    <!-- Controls -->
+    <div class="button-container">
+      <button id="reset-btn">Reset</button>
+      <div id="warning">⚠️ Please fill all 5 letters before solving!</div>
+      <div id="invalid">❌ That word isn’t in Wordle’s word list!</div>
+      <div id="message"></div>
+    </div>
+  </div>
+
+  <!-- Background controls -->
+  <div class="bg-controls">
+    <button id="bg-change-btn">Change Background</button>
+    <button id="bg-toggle-btn">Disable Background</button>
+  </div>
+
+  <script>
+    let words = [];
+    let solution = '';
+    let currentRow = 0;
+    const maxRows = 6;
+    const maxCols = 5;
+    let board = [];
+
+    // Load words.txt
+    fetch('words.txt')
+      .then(res => res.text())
+      .then(text => {
+        words = text.split(/\r?\n/).map(w => w.trim().toLowerCase()).filter(w => w.length === 5);
+        newGame();
+      });
+
+    function newGame() {
+      solution = words[Math.floor(Math.random() * words.length)];
+      console.log('Solution:', solution);
+      initBoard();
+      document.getElementById('warning').style.display = 'none';
+      document.getElementById('invalid').style.display = 'none';
+      document.getElementById('message').innerText = '';
+    }
+
+    function initBoard() {
+      const boardDiv = document.getElementById('board');
+      boardDiv.innerHTML = '';
+      board = [];
+      for (let r = 0; r < maxRows; r++) {
+        const rowDiv = document.createElement('div');
+        rowDiv.classList.add('row');
+        const row = [];
+        for (let c = 0; c < maxCols; c++) {
+          const cell = document.createElement('input');
+          cell.setAttribute('maxlength', 1);
+          cell.classList.add('cell');
+          rowDiv.appendChild(cell);
+          row.push(cell);
+
+          // Move to next cell on input
+          cell.addEventListener('input', () => {
+            if (cell.value.length > 0 && c < maxCols - 1) row[c + 1].focus();
+          });
+
+          // Backspace moves back
+          cell.addEventListener('keydown', (e) => {
+            if (e.key === 'Backspace' && cell.value === '' && c > 0) {
+              row[c - 1].focus();
+            }
+          });
+        }
+        boardDiv.appendChild(rowDiv);
+        board.push(row);
+      }
+      currentRow = 0;
+      board[0][0].focus();
+    }
+
+    document.getElementById('reset-btn').addEventListener('click', newGame);
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') checkRow();
+    });
+
+    function checkRow() {
+      const guess = board[currentRow].map(cell => cell.value.toLowerCase()).join('');
+      if (guess.length < maxCols) {
+        document.getElementById('warning').style.display = 'block';
+        return;
+      } else {
+        document.getElementById('warning').style.display = 'none';
+      }
+
+      if (!words.includes(guess)) {
+        document.getElementById('invalid').style.display = 'block';
+        return;
+      } else {
+        document.getElementById('invalid').style.display = 'none';
+      }
+
+      // Smooth coloring with slight stagger
+      board[currentRow].forEach((cell, c) => {
+        setTimeout(() => {
+          if (guess[c] === solution[c]) cell.classList.add('green');
+          else if (solution.includes(guess[c])) cell.classList.add('yellow');
+          else cell.classList.add('gray');
+          cell.setAttribute('readonly', true);
+        }, c * 150);
+      });
+
+      if (guess === solution) {
+        setTimeout(() => {
+          document.getElementById('message').innerText = '🎉 Congratulations! You guessed the word!';
+        }, maxCols * 150);
+        return;
+      }
+
+      currentRow++;
+      if (currentRow >= maxRows) {
+        setTimeout(() => {
+          document.getElementById('message').innerText = `💀 Game Over! The word was: ${solution}`;
+        }, maxCols * 150);
+        return;
+      }
+
+      setTimeout(() => board[currentRow][0].focus(), maxCols * 150);
+    }
+
+    // --- Background ---
+    let bgEnabled = true;
+    const backgrounds = [
+      "https://i.pinimg.com/originals/22/07/43/220743df7f831dce831375e9949a68c6.gif",
+      "https://i.pinimg.com/originals/66/29/ac/6629ac69eee96adbe0880b4f06afdc26.gif",
+      "https://media3.giphy.com/media/v1.Y2lkPTZjMDliOTUycGhhYzVrb2ZsMXo4MnFxbzYwbXFnYmhiYnk5N2N2Z2t4cXkxMmszaCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/b29IZK1dP4aWs/giphy.gif",
+      "https://giffiles.alphacoders.com/145/14565.gif",
+      "https://i.pinimg.com/originals/70/34/68/703468dd221332430b108354a9f65f7f.gif"
+    ];
+
+    function applyBackground(url) {
+      document.body.style.background = `url('${url}') no-repeat center center fixed`;
+      document.body.style.backgroundSize = "cover";
+    }
+
+    function changeBackground() {
+      if (!bgEnabled) return;
+      const bg = backgrounds[Math.floor(Math.random() * backgrounds.length)];
+      applyBackground(bg);
+    }
+
+    function toggleBackground() {
+      bgEnabled = !bgEnabled;
+      if (bgEnabled) changeBackground();
+      else document.body.style.background = "#1e1e2f";
+    }
+
+    changeBackground();
+    document.getElementById('bg-change-btn').addEventListener('click', changeBackground);
+    document.getElementById('bg-toggle-btn').addEventListener('click', toggleBackground);
+  </script>
+</body>
+</html>
