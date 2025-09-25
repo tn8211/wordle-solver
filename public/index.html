@@ -10,14 +10,15 @@
     <h1>TN's Tools</h1>
     <div class="button-container">
       <a href="solver.html"><button>Wordle Solver</button></a>
-      <button onclick="alert('Coming Soon!')">Other Tool</button>
+      <a href="wordle.html"><button>Wordle</button></a>
+      <button onclick="alert('Coming Soon!')">Other Tools</button>
     </div>
   </div>
 
-<div class="bg-controls">
-  <button onclick="changeBackground()" style="background-color: #17a2b8; color: white;">Change Background</button>
-  <button onclick="toggleBackground()" style="background-color: #6c757d; color: white;">Disable Background</button>
-</div>
+  <div class="bg-controls">
+    <button onclick="changeBackground()" style="background-color: #17a2b8; color: white;">Change Background</button>
+    <button onclick="toggleBackground()" style="background-color: #6c757d; color: white;">Disable Background</button>
+  </div>
 
   <script>
     let bgEnabled = true;
@@ -46,7 +47,6 @@
       else document.body.style.background = "#1e1e2f";
     }
 
-    // Pick a background at start
     changeBackground();
   </script>
 </body>
