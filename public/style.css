@@ -1,0 +1,186 @@
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 50px 20px;
+  min-height: 100vh;
+}
+
+.container {
+  background: #2c2c3f;
+  border-radius: 15px;
+  padding: 30px;
+  max-width: 500px;
+  width: 100%;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+  text-align: center;
+}
+
+h1 {
+  margin-bottom: 25px;
+  color: #f0a500;
+}
+
+.board { 
+  display: flex; 
+  flex-direction: column; 
+  gap: 10px; 
+  align-items: center; 
+}
+
+.row { display: flex; justify-content: center; gap: 5px; }
+
+.cell {
+  width: 50px;
+  height: 50px;
+  font-size: 24px;
+  text-align: center;
+  border-radius: 8px;
+  border: none;
+  outline: none;
+  background: #3c3c55;
+  color: #fff;
+  cursor: pointer;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.cell.green { background: #28a745; color: #fff; }
+.cell.yellow { background: #ffc107; color: #1e1e2f; }
+.cell.gray { background: #6c757d; color: #fff; }
+.cell.readonly { cursor: default; }
+
+.button-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-top: 40px;
+}
+
+button {
+  width: 150px;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: 0.2s;
+}
+
+#solve-btn { background: #f0a500; }
+#solve-btn:hover { background: #ffd580; }
+#reset-btn { background: #dc3545; }
+#reset-btn:hover { background: #ff6b6b; }
+
+#warning, #invalid {
+  margin-top: 10px;
+  font-weight: bold;
+  display: none;
+}
+#warning { color: #ffcc00; }
+#invalid { color: #ff4d4d; }
+
+#results { margin-top: 30px; text-align: left; }
+#results h3 { color: #ffd580; }
+
+/* Compact grid for matches */
+.matches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+  max-height: 250px;
+  overflow-y: auto;
+}
+
+.matches li { margin: 0; }
+
+.matches button {
+  background: #3c3c55;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 10px;
+  cursor: pointer;
+  color: #fff;
+  font-size: 14px;
+}
+
+.matches button:hover {
+  background: #55556d;
+}
+
+/* Background controls bottom-left */
+.bg-controls {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 1000;
+}
+
+.bg-controls button {
+  width: 160px;
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+#bg-change-btn { background: #17a2b8; color: #fff; }
+#bg-change-btn:hover { background: #20c4d8; }
+#bg-toggle-btn { background: #6c757d; color: #fff; }
+#bg-toggle-btn:hover { background: #8a939b; }
+
+#match-search {
+  padding: 6px 10px;
+  margin: 10px 0;
+  width: 100%;
+  border-radius: 6px;
+  border: none;
+  font-size: 14px;
+  background: #3c3c55;
+  color: #fff;
+}
+#match-search::placeholder { color: #ccc; }
+
+/* Back arrow button inside container, top-right */
+/* Back arrow button */
+.back-btn {
+  position: absolute; /* relative to container */
+  top: 15px;
+  left: 15px;
+  width: 36px;
+  height: 36px;
+  background: #17a2b8; /* dark blue */
+  color: #fff;
+  border: none;
+  border-radius: 50%; /* circular */
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease;
+}
+
+.back-btn:hover {
+  background: #20c4d8; /* lighter blue on hover */
+}
+
+/* Ensure container has relative positioning so the button is inside it */
+.container {
+  position: relative;
+}
+

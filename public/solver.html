@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Wordle Solver</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Wordle Solver
+      <!-- Back arrow button top-right inside container -->
+      <button class="back-btn" onclick="location.href='index.html'">
+        ←
+      </button>
+    </h1>
+
+    <div class="board" id="board"></div>
+
+    <div class="button-container">
+      <button id="solve-btn">Solve</button>
+      <button id="reset-btn">Reset</button>
+      <div id="warning">⚠️ Please fill all 5 letters before solving!</div>
+      <div id="invalid">❌ That word isn’t in Wordle’s word list!</div>
+    </div>
+
+    <div id="results"></div>
+  </div>
+
+  <!-- Background buttons -->
+  <div class="bg-controls">
+    <button id="bg-change-btn">Change Background</button>
+    <button id="bg-toggle-btn">Disable Background</button>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
