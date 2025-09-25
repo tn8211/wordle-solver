@@ -74,6 +74,14 @@ button {
 #reset-btn { background: #dc3545; }
 #reset-btn:hover { background: #ff6b6b; }
 
+#warning, #invalid {
+  margin-top: 10px;
+  font-weight: bold;
+  display: none;
+}
+#warning { color: #ffcc00; }
+#invalid { color: #ff4d4d; }
+
 #results { margin-top: 30px; text-align: left; }
 #results h3 { color: #ffd580; }
 ul { list-style: none; padding-left: 0; max-height: 250px; overflow-y: auto; }
@@ -88,6 +96,8 @@ ul li { background: #3c3c55; margin: 5px 0; padding: 8px 12px; border-radius: 6p
 <div class="button-container">
   <button id="solve-btn" onclick="solve()">Solve</button>
   <button id="reset-btn" onclick="resetGame()">Reset</button>
+  <div id="warning">⚠️ Please fill all 5 letters before solving!</div>
+  <div id="invalid">❌ That word isn’t in Wordle’s word list!</div>
 </div>
 
 <div id="results"></div>
@@ -100,7 +110,7 @@ let wordList = [];
 
 fetch('words.txt')
   .then(res => res.text())
-  .then(text => wordList = text.split('\n').map(w => w.trim()).filter(Boolean));
+  .then(text => wordList = text.split('\n').map(w => w.trim().toLowerCase()).filter(Boolean));
 
 // Create a new row of boxes
 function createRow() {
@@ -129,13 +139,8 @@ function handleInput(e, cell) {
   const col = parseInt(cell.dataset.col);
   cell.value = cell.value.toUpperCase();
   const cells = document.querySelectorAll(`.row[data-row='${row}'] .cell`);
-
-  // Move focus to next cell automatically
-  if (col < COLS - 1) {
-    cells[col + 1].focus();
-  }
+  if (col < COLS - 1 && cell.value) cells[col + 1].focus();
 }
-
 
 function handleBackspace(e, cell) {
   if (e.key === 'Backspace') {
@@ -154,9 +159,9 @@ function handleBackspace(e, cell) {
 
 function cycleColor(cell) {
   if (!cell.readOnly) {
-    if (cell.classList.contains('gray')) { cell.classList.remove('gray'); cell.classList.add('yellow'); }
-    else if (cell.classList.contains('yellow')) { cell.classList.remove('yellow'); cell.classList.add('green'); }
-    else if (cell.classList.contains('green')) { cell.classList.remove('green'); cell.classList.add('gray'); }
+    if (cell.classList.contains('gray')) { cell.classList.replace('gray','yellow'); }
+    else if (cell.classList.contains('yellow')) { cell.classList.replace('yellow','green'); }
+    else if (cell.classList.contains('green')) { cell.classList.replace('green','gray'); }
   }
 }
 
@@ -176,13 +181,42 @@ function suggestBestWord(words) {
 function solve() {
   if (!wordList.length) { alert('Words loading'); return; }
 
+  const cells = document.querySelectorAll(`.row[data-row='${currentRow}'] .cell`);
+  const guess = [...cells].map(c=>c.value.toLowerCase()).join('');
+
+  // Check full word length
+  if (guess.length < COLS || [...cells].some(c => !c.value)) {
+    document.getElementById('warning').style.display = 'block';
+    document.getElementById('invalid').style.display = 'none';
+    return;
+  } else {
+    document.getElementById('warning').style.display = 'none';
+  }
+
+  // Check if word exists in dictionary
+  if (!wordList.includes(guess)) {
+    document.getElementById('invalid').style.display = 'block';
+    return;
+  } else {
+    document.getElementById('invalid').style.display = 'none';
+  }
+
+  // ✅ Check if all letters are green
+  const allGreen = [...cells].every(c => c.classList.contains('green'));
+  if (allGreen) {
+    document.getElementById('results').innerHTML = `
+      <h3>🎉 You solved it! The word is <strong>${guess.toUpperCase()}</strong></h3>
+    `;
+    return; // stop here
+  }
+
   const correct = Array(COLS).fill(null);
   const present = [];
   const absent = [];
 
   for (let r = 0; r <= currentRow; r++) {
-    const cells = document.querySelectorAll(`.row[data-row='${r}'] .cell`);
-    cells.forEach((cell,i)=>{
+    const rowCells = document.querySelectorAll(`.row[data-row='${r}'] .cell`);
+    rowCells.forEach((cell,i)=>{
       const letter = cell.value.toLowerCase();
       if (!letter) return;
       if (cell.classList.contains('green')) correct[i]=letter;
@@ -206,14 +240,7 @@ function solve() {
     <ul>${results.map(w=>`<li>${w}</li>`).join('')}</ul>
   `;
 
-  // **Lock the current row after pressing Solve**
-  const cells = document.querySelectorAll(`.row[data-row='${currentRow}'] .cell`);
-  cells.forEach(c => { 
-      c.readOnly = true; 
-      c.classList.add('readonly'); 
-  });
-
-  // Create new row for next guess
+  cells.forEach(c => { c.readOnly = true; c.classList.add('readonly'); });
   currentRow++;
   createRow();
 }
@@ -222,6 +249,8 @@ function resetGame() {
   currentRow = 0;
   document.getElementById('board').innerHTML = '';
   document.getElementById('results').innerHTML = '';
+  document.getElementById('warning').style.display = 'none';
+  document.getElementById('invalid').style.display = 'none';
   createRow();
 }
 
