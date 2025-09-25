@@ -5,17 +5,16 @@ on:
   # Runs on pushes targeting the main branch
   push:
     branches: ["main"]
-
-  # Allows you to run this workflow manually from the Actions tab
+  # Allows manual trigger from Actions tab
   workflow_dispatch:
 
-# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+# Permissions for GitHub Pages deployment
 permissions:
   contents: read
   pages: write
   id-token: write
 
-# Only allow one concurrent deployment
+# Only one deployment at a time
 concurrency:
   group: "pages"
   cancel-in-progress: false
@@ -36,9 +35,8 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: |
-            solver.html
-            words.txt
+          # Upload the public folder
+          path: 'public'
 
       - name: Deploy to GitHub Pages
         id: deployment
