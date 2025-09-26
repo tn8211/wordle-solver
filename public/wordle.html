@@ -4,6 +4,47 @@
   <meta charset="UTF-8">
   <title>Wordle</title>
   <link rel="stylesheet" href="style.css">
+  <style>
+    /* Center the button container */
+    .button-container {
+      display: flex;
+      justify-content: center;
+      gap: 10px; /* spacing between buttons */
+      margin-top: 15px;
+    }
+
+    /* Submit button styling (Wordle yellow) */
+    #submit-btn {
+      background-color: #c9b458;
+      color: black;
+      border: none;
+      padding: 10px 20px;
+      font-size: 16px;
+      border-radius: 5px;
+      cursor: pointer;
+      text-align: center;
+    }
+
+    #submit-btn:hover {
+      opacity: 0.9;
+    }
+
+    /* Reset button (Wordle gray) */
+    #reset-btn {
+      background-color: #787c7e;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      font-size: 16px;
+      border-radius: 5px;
+      cursor: pointer;
+      text-align: center;
+    }
+
+    #reset-btn:hover {
+      opacity: 0.9;
+    }
+  </style>
 </head>
 <body>
   <div class="container">
@@ -18,10 +59,13 @@
     <!-- Controls -->
     <div class="button-container">
       <button id="reset-btn">Reset</button>
-      <div id="warning">⚠️ Please fill all 5 letters before solving!</div>
-      <div id="invalid">❌ That word isn’t in Wordle’s word list!</div>
-      <div id="message"></div>
+      <button id="submit-btn">Submit</button>
     </div>
+
+    <!-- Messages -->
+    <div id="warning">⚠️ Please fill all 5 letters before solving!</div>
+    <div id="invalid">❌ That word isn’t in Wordle’s word list!</div>
+    <div id="message"></div>
   </div>
 
   <!-- Background controls -->
@@ -67,6 +111,10 @@
           const cell = document.createElement('input');
           cell.setAttribute('maxlength', 1);
           cell.classList.add('cell');
+
+          // Only enable first row initially
+          if (r !== 0) cell.disabled = true;
+
           rowDiv.appendChild(cell);
           row.push(cell);
 
@@ -91,6 +139,8 @@
 
     document.getElementById('reset-btn').addEventListener('click', newGame);
 
+    document.getElementById('submit-btn').addEventListener('click', checkRow);
+
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') checkRow();
     });
@@ -111,7 +161,7 @@
         document.getElementById('invalid').style.display = 'none';
       }
 
-      // Smooth coloring with slight stagger
+      // Smooth coloring with stagger
       board[currentRow].forEach((cell, c) => {
         setTimeout(() => {
           if (guess[c] === solution[c]) cell.classList.add('green');
@@ -135,6 +185,10 @@
         }, maxCols * 150);
         return;
       }
+
+      // Lock old row, unlock new row
+      board[currentRow - 1].forEach(cell => cell.disabled = true);
+      board[currentRow].forEach(cell => cell.disabled = false);
 
       setTimeout(() => board[currentRow][0].focus(), maxCols * 150);
     }
