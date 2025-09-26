@@ -5,15 +5,12 @@
   <title>Wordle</title>
   <link rel="stylesheet" href="style.css">
   <style>
-    /* Center the button container */
     .button-container {
       display: flex;
       justify-content: center;
-      gap: 10px; /* spacing between buttons */
+      gap: 10px;
       margin-top: 15px;
     }
-
-    /* Submit button styling (Wordle yellow) */
     #submit-btn {
       background-color: #c9b458;
       color: black;
@@ -24,12 +21,7 @@
       cursor: pointer;
       text-align: center;
     }
-
-    #submit-btn:hover {
-      opacity: 0.9;
-    }
-
-    /* Reset button (Wordle gray) */
+    #submit-btn:hover { opacity: 0.9; }
     #reset-btn {
       background-color: #787c7e;
       color: white;
@@ -40,63 +32,51 @@
       cursor: pointer;
       text-align: center;
     }
-
-    #reset-btn:hover {
-      opacity: 0.9;
-    }
+    #reset-btn:hover { opacity: 0.9; }
   </style>
 </head>
 <body>
   <div class="container">
-    <!-- Back button top-left -->
     <button class="back-btn" onclick="location.href='index.html'">&#8592;</button>
-
     <h1>Wordle</h1>
 
-    <!-- Board -->
     <div class="board" id="board"></div>
 
-    <!-- Controls -->
     <div class="button-container">
       <button id="reset-btn">Reset</button>
       <button id="submit-btn">Submit</button>
     </div>
 
-    <!-- Messages -->
     <div id="warning">⚠️ Please fill all 5 letters before solving!</div>
-    <div id="invalid">❌ That word isn’t in Wordle’s word list!</div>
+    <div id="invalid">❌ That word isn’t in the dictionary!</div>
     <div id="message"></div>
   </div>
 
-  <!-- Background controls -->
   <div class="bg-controls">
     <button id="bg-change-btn">Change Background</button>
     <button id="bg-toggle-btn">Disable Background</button>
   </div>
 
   <script>
-    let words = [];
     let solution = '';
     let currentRow = 0;
     const maxRows = 6;
     const maxCols = 5;
     let board = [];
 
-    // Load words.txt
-    fetch('words.txt')
-      .then(res => res.text())
-      .then(text => {
-        words = text.split(/\r?\n/).map(w => w.trim().toLowerCase()).filter(w => w.length === 5);
-        newGame();
-      });
-
-    function newGame() {
-      solution = words[Math.floor(Math.random() * words.length)];
-      console.log('Solution:', solution);
+    // pick a random 5-letter word from API for solution
+    async function newGame() {
+      solution = await getRandomWord();
+      console.log("Solution:", solution);
       initBoard();
       document.getElementById('warning').style.display = 'none';
       document.getElementById('invalid').style.display = 'none';
       document.getElementById('message').innerText = '';
+    }
+
+    async function getRandomWord() {
+      const dict = ["apple","grape","smile","world","track","light","chair","sugar","plane","drink"];
+      return dict[Math.floor(Math.random() * dict.length)];
     }
 
     function initBoard() {
@@ -111,19 +91,13 @@
           const cell = document.createElement('input');
           cell.setAttribute('maxlength', 1);
           cell.classList.add('cell');
-
-          // Only enable first row initially
           if (r !== 0) cell.disabled = true;
-
           rowDiv.appendChild(cell);
           row.push(cell);
 
-          // Move to next cell on input
           cell.addEventListener('input', () => {
             if (cell.value.length > 0 && c < maxCols - 1) row[c + 1].focus();
           });
-
-          // Backspace moves back
           cell.addEventListener('keydown', (e) => {
             if (e.key === 'Backspace' && cell.value === '' && c > 0) {
               row[c - 1].focus();
@@ -138,14 +112,10 @@
     }
 
     document.getElementById('reset-btn').addEventListener('click', newGame);
-
     document.getElementById('submit-btn').addEventListener('click', checkRow);
+    document.addEventListener('keydown', (e) => { if (e.key === 'Enter') checkRow(); });
 
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') checkRow();
-    });
-
-    function checkRow() {
+    async function checkRow() {
       const guess = board[currentRow].map(cell => cell.value.toLowerCase()).join('');
       if (guess.length < maxCols) {
         document.getElementById('warning').style.display = 'block';
@@ -154,14 +124,14 @@
         document.getElementById('warning').style.display = 'none';
       }
 
-      if (!words.includes(guess)) {
+      const valid = await isValidWord(guess);
+      if (!valid) {
         document.getElementById('invalid').style.display = 'block';
         return;
       } else {
         document.getElementById('invalid').style.display = 'none';
       }
 
-      // Smooth coloring with stagger
       board[currentRow].forEach((cell, c) => {
         setTimeout(() => {
           if (guess[c] === solution[c]) cell.classList.add('green');
@@ -173,7 +143,7 @@
 
       if (guess === solution) {
         setTimeout(() => {
-          document.getElementById('message').innerText = '🎉 Congratulations! You guessed the word!';
+          document.getElementById('message').innerText = '🎉 Congratulations! You guessed it!';
         }, maxCols * 150);
         return;
       }
@@ -186,11 +156,18 @@
         return;
       }
 
-      // Lock old row, unlock new row
       board[currentRow - 1].forEach(cell => cell.disabled = true);
       board[currentRow].forEach(cell => cell.disabled = false);
-
       setTimeout(() => board[currentRow][0].focus(), maxCols * 150);
+    }
+
+    async function isValidWord(word) {
+      try {
+        const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`);
+        return res.ok;
+      } catch {
+        return false;
+      }
     }
 
     // --- Background ---
@@ -198,31 +175,29 @@
     const backgrounds = [
       "https://i.pinimg.com/originals/22/07/43/220743df7f831dce831375e9949a68c6.gif",
       "https://i.pinimg.com/originals/66/29/ac/6629ac69eee96adbe0880b4f06afdc26.gif",
-      "https://media3.giphy.com/media/v1.Y2lkPTZjMDliOTUycGhhYzVrb2ZsMXo4MnFxbzYwbXFnYmhiYnk5N2N2Z2t4cXkxMmszaCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/b29IZK1dP4aWs/giphy.gif",
+      "https://media3.giphy.com/media/v1.Y2lkPTZjMDliOTUycGhhYzVrb2Zs4MnFxbzYwbXFnYmhiYnk5N2N2Z2t4cXkxMmszaCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/b29IZK1dP4aWs/giphy.gif",
       "https://giffiles.alphacoders.com/145/14565.gif",
       "https://i.pinimg.com/originals/70/34/68/703468dd221332430b108354a9f65f7f.gif"
     ];
-
     function applyBackground(url) {
       document.body.style.background = `url('${url}') no-repeat center center fixed`;
       document.body.style.backgroundSize = "cover";
     }
-
     function changeBackground() {
       if (!bgEnabled) return;
       const bg = backgrounds[Math.floor(Math.random() * backgrounds.length)];
       applyBackground(bg);
     }
-
     function toggleBackground() {
       bgEnabled = !bgEnabled;
       if (bgEnabled) changeBackground();
       else document.body.style.background = "#1e1e2f";
     }
-
     changeBackground();
     document.getElementById('bg-change-btn').addEventListener('click', changeBackground);
     document.getElementById('bg-toggle-btn').addEventListener('click', toggleBackground);
+
+    newGame();
   </script>
 </body>
 </html>
