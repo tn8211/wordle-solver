@@ -73,7 +73,7 @@ button {
 
 #solve-btn { background: #f0a500; }
 #solve-btn:hover { background: #ffd580; }
-#reset-btn { background: #dc3545; }
+#reset-btn { background: #FF0000; }
 #reset-btn:hover { background: #ff6b6b; }
 
 #warning, #invalid {
@@ -196,5 +196,18 @@ button {
 .cell.flipped {
   transform: rotateX(0deg);
 }
+
+#submit-btn {
+  background-color: #c9b458; /* Wordle yellow */
+  color: black;             /* black text */
+  font-weight: bold;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  display: block;           /* makes it take up its own line */
+  margin: 10px auto;        /* centers horizontally */
+}
+
 
 
